@@ -8,9 +8,9 @@
   // Checked against the installed workerd (1.20261117.1): 2026-09-01 is accepted.
   "compatibility_date": "2026-09-01",
 
-  // The official host serves the root domain only (the passkey RP ID). No workers.dev or preview URL, so the
-  // app has exactly one origin. Self-hosters change the pattern to their own domain.
-  "routes": [{ "pattern": "zptah.app", "custom_domain": true }],
+  // This self-hosted instance serves one hostname only (the passkey RP ID). No workers.dev or preview URL, so the
+  // app has exactly one origin.
+  "routes": [{ "pattern": "monoptah.hypercoding.dev", "custom_domain": true }],
   "workers_dev": false,
   "preview_urls": false,
 
@@ -38,9 +38,9 @@
     {
       "binding": "DB",
       "database_name": "monoptah",
-      // The official host's database (`wrangler d1 create monoptah`). Self-hosters create their own and
-      // replace this id; `--local` and the tests do not use it.
-      "database_id": "11eee6d9-4097-41f6-a06a-580fcb9f656a",
+      // This self-hosted instance's database (`wrangler d1 create monoptah`, 2026-11-21); `--local` and the
+      // tests do not use it.
+      "database_id": "8f9cb801-f174-466d-98de-83bada207902",
       "migrations_dir": "worker/migrations"
     }
   ],
@@ -50,26 +50,28 @@
   // this file: see docs/deploy-runbook.md "File transfer bucket". `wrangler dev` and the tests use a local simulation.
   "r2_buckets": [{ "binding": "TRANSFERS", "bucket_name": "monoptah-transfers" }],
 
-  // Daily cleanup (worker/src/cron.ts): expired challenges, sessions, rate limit windows, old audit rows.
-  "triggers": { "crons": ["17 3 * * *"] },
+  // Cron intentionally empty on this self-host: the account is limited to 5 crons on the Free plan, so the daily
+  // cleanup of worker/src/cron.ts does not run here. Stale `pending` device grants are revoked by hand in the web
+  // UI. See ~/.config/monoptah-selfhost/DEPLOY.md. The empty list (not an absent key) removes an existing schedule.
+  "triggers": { "crons": [] },
 
-  // Every non-secret setting the program reads. Official host values; self-hosters change them.
+  // Every non-secret setting the program reads. Values of the self-hosted instance monoptah.hypercoding.dev.
   "vars": {
     // RP_ID must never change after the first user registers: every passkey would break.
-    "RP_ID": "zptah.app",
-    "RP_ORIGIN": "https://zptah.app",
-    // Public half of the official host's VAPID key pair (P-256, base64url, from `pnpm vapid:generate`).
-    "VAPID_PUBLIC_KEY": "BB1PzReHnjoUI6Ya2zu3mIg_q9smtWPUkLtSjm_nLgn3KHRaI6JDZhOTLP0qb3C_rUWIgqFxT_8LjXQvVZ03_as",
+    "RP_ID": "monoptah.hypercoding.dev",
+    "RP_ORIGIN": "https://monoptah.hypercoding.dev",
+    // Public half of this instance's VAPID key pair (P-256, base64url, from `pnpm vapid:generate`).
+    "VAPID_PUBLIC_KEY": "BGY4O82yoOagEofh8b-c6SYAPB7q5Pclr1hXWLngKx-R5lWMCy6w08L3OIq6rxjTuTvOLVSHFO0gRv_MYBOHdow",
     // Which VAPID key the public key above is (stored in push_subscriptions.vapid_key_id, for rotation).
     "VAPID_KEY_ID": "v1",
-    "VAPID_SUBJECT": "mailto:admin@zptah.app",
+    "VAPID_SUBJECT": "https://monoptah.hypercoding.dev",
     // VAPID key rotation only (docs/deploy-runbook.md "VAPID key rotation"): add the OLD public key and its key id
     // here for the rotation period, and the old private key as the secret VAPID_PREVIOUS_PRIVATE_KEY. Never put a
     // key in this file that is not public. Remove all three when the rotation ends. Not set normally:
     //   "VAPID_PREVIOUS_PUBLIC_KEY": "<old public key, base64url>",
     //   "VAPID_PREVIOUS_KEY_ID": "v1",
     // Registered users for the whole instance, incl. blocked. "0" means unlimited (self-host default).
-    "MAX_USERS": "150",
+    "MAX_USERS": "5",
     "MAX_DESKTOPS_PER_USER": "5",
     "MAX_DEVICES_PER_USER": "10"
   }
